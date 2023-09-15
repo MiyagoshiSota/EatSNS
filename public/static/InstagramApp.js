@@ -1,61 +1,73 @@
-const hashTagName = '1784146199779532';
-const instaBusinessId = '1122113486292026406';
-const accessToken = 'EAAJ3mxwna00BOzbM7ZBxsumUHxF61yKZC7KuZAWZBNaKb2GpbzTkfFkcp53JZB2GBDbkYWwyCGvCH8fu0Ole84t65srOz9Focehpr3Kd9JEGnUbuLT8Q1dS9G3zJvHGeaKsfqWhgQ2dLf6aLdHQ1TWv6WP1adg17hHHJaUtpTXeL3nrQpCBTsPVRiWKgN4HpwT7JgEhmDZCZCdVIEFZBTKae9Gq9UGSM5pkXIOwC';
+let access_token = "EAAJ3mxwna00BOzLH0JODMzybXxN7XBJT4SfJUjj1S9mIIhMUTw9MsWOCxOjxBJxxVwpakctSCLluAtmmX5uEhupbCazVWLU8nI7dIUKMFIt1cigB47jb3iEFzrS3t8IQzY3Dt7RpNSDjZCRAnRzk5bAv4qaxNFQL3XY3FzwVrQA2SmYFNM9CCBi2ZB0iqdSRKneFkfHhduafva5Of4hx5W6dUfXPZA1MPYZD";
+let div_element = document.getElementById("main_div");
+let new_element = document.createElement('div');
+let serch_word = document.getElementById("serch").value;
+let img = document.createElement('img');
+let serch_id;
 
 
-// InstagramAPIでハッシュタグIDを取得する
-function getIgHashId() {
-  try {
-const url = `https://graph.facebook.com/v17.0/ig_hashtag_search?user_id=${instaBusinessId}&q=${hashTagName}&access_token=${accessToken}`;
- const response = instagramApi(url, 'GET', '', accessToken);
+function Serch(){
 
- const data = JSON.parse(response.getContentText());
- const hashTagId = data.data[0].id;
- 
- return hashTagId;
- } catch (error) {
- console.error('Instagram APIのリクエスト中にエラーが発生しました:', error);
- return null;
- }
+    console.log(serch_word);
+
+    $.ajax({
+        type: 'GET',
+        url: 'https://graph.facebook.com/v17.0/ig_hashtag_search?user_id=17841461997795323&q=' + serch_word + '&access_token=' + access_token,
+        dataType: 'json',
+        success: function(json) {
+                console.log(json.data[0].id);
+                serch_id = json.data[0].id;
+                view();
+            }
+    });
 }
+function view(){
+    $.ajax({
+    type: 'GET',
+    url: 'https://graph.facebook.com/'+ serch_id +'/top_media?user_id=17841461997795323&fields=caption,comments_count,id,like_count,media_type,media_url,permalink,timestamp,children{media_url}&access_token=' + access_token + '&limit=20',
+    dataType: 'json',
+    success: function(json) {
+        console.log(json);
+        for(let i = 0; i < json["data"].length; i++){
+            if(json.data[i].media_type == "VIDEO" && json.data[i].media_url != null){
+                let link = document.createElement('a');
+                let img = document.createElement('video');
 
+                console.log(json.data[i]);
+                link.href = json.data[i].permalink;
 
-// APIを叩く関数
-function instagramApi(url, method, payload, accessToken) {
- try {
- const headers = {
-  'Authorization': 'Bearer ' + accessToken
-  };
- const options = {
-  'method': method,
-  'headers': headers,
-  'payload': payload
- };
+                img.src = json.data[i].media_url;
+                img.type="video/mp4";
+                img.autoplay = true;
+                img.loop = true;
+                img.volume = 1;
+                img.width = 300;
+                img.height = 300;
 
- const response = UrlFetchApp.fetch(url, options);
- return response;
- } catch (error) {
- console.error('Instagram APIのリクエスト中にエラーが発生しました:', error);
- return null;
- }
+                new_element.appendChild(link);
+                link.appendChild(img);
+                console.log(json.data[i].permalink);
+            }
+            else if(json.data[i].media_type == "CAROUSEL_ALBUM" ){
+                for(let j = 0; j < json.data[i].children['data'].length; j++){
+                    if(json.data[i].children.data[j].media_url.includes("mp4")){
+                        const img = document.createElement("video");
+
+                        img.src = json.data[i].children.data[j].media_url;
+                        img.type="video/mp4";
+                        img.autoplay = true;
+                        img.loop = true;
+                        img.volume = 1;
+                        img.width = 300;
+                        img.height = 300;
+
+                        console.log(json.data[i].children.data[j].media_url);
+                        new_element.appendChild(img);
+                    }
+                }
+            }
+        }
+        div_element.appendChild(new_element);
+    }
+    });
 }
-
-//htmlに書いてあったやつ
-window.fbAsyncInit = function() {
-  FB.init({
-    appId      : '1060576928275758',
-    xfbml      : true,
-    version    : 'v17.0'
-  });
-  FB.AppEvents.logPageView();
-};
-
-(function(d, s, id){
-   var js, fjs = d.getElementsByTagName(s)[0];
-   if (d.getElementById(id)) {return;}
-   js = d.createElement(s); js.id = id;
-   js.src = "https://connect.facebook.net/en_US/sdk.js";
-   fjs.parentNode.insertBefore(js, fjs);
- }(document, 'script', 'facebook-jssdk'));
-
-
